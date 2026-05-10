@@ -26,7 +26,6 @@ Designed specifically for real estate acquisition teams targeting distressed pro
 - n8n
 - Retell AI
 - Twilio
-- ElevenLabs
 - Airtable
 - OpenAI / Claude / Gemini APIs
 
