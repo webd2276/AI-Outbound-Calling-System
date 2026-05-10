@@ -1,0 +1,1184 @@
+{
+  "name": "AI Outbound Calling Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "739b6514-2421-4719-a192-333db3f3acb4",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appkms1NEp3EjL8uY",
+          "mode": "list",
+          "cachedResultName": "Lead Management",
+          "cachedResultUrl": "https://airtable.com/appkms1NEp3EjL8uY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbleBmdWKD39SGeh7",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appkms1NEp3EjL8uY/tbleBmdWKD39SGeh7"
+        },
+        "id": "kms1NEp3EjL8uY/tbleBmdWKD39SGeh7/viwz7miPcfWQ9uIXS",
+        "options": {}
+      },
+      "id": "d8a93121-5bfe-4e83-8cc1-566d2a69fa37",
+      "name": "Fetch Pending Leads",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        416
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "QirPdWG4pZJxZI13",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/v2/create-phone-call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "agent_id",
+              "value": "agent_2b856da8bd8ccf1b4f699393f8"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d55bd097-8b6d-4152-93d6-a14d1a199bb3",
+      "name": "Create Retell AI Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        688,
+        400
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "6SyOI9bntbapoXeV",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retell-callback",
+        "options": {}
+      },
+      "id": "7833d6ba-61af-4d3c-bb18-951432227cf1",
+      "name": "Retell Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        784
+      ],
+      "webhookId": "f1d46735-ebcf-46a1-96aa-b33ad2b41a2f"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.call_status }}",
+                    "rightValue": "voicemail",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.call_status }}",
+                    "rightValue": "completed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "545db0b9-251e-44f9-8890-c3b91d58d6d6",
+      "name": "Check Call Status",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        784
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appkms1NEp3EjL8uY",
+          "mode": "list",
+          "cachedResultName": "Lead Management",
+          "cachedResultUrl": "https://airtable.com/appkms1NEp3EjL8uY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbleBmdWKD39SGeh7",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appkms1NEp3EjL8uY/tbleBmdWKD39SGeh7"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": "={{ $json.body.metadata.lead_id }}",
+            "Lead Source": "Outbound",
+            "Industry": "Real Estate",
+            "Priority": "High",
+            "Status": "New",
+            "Most Recent Call Date": "2026-05-09T00:00:00"
+          },
+          "matchingColumns": [
+            "Lead Name",
+            "Email",
+            "Phone"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Name",
+              "displayName": "Lead Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Website",
+                  "value": "Website"
+                },
+                {
+                  "name": "Referral",
+                  "value": "Referral"
+                },
+                {
+                  "name": "Outbound",
+                  "value": "Outbound"
+                },
+                {
+                  "name": "Event",
+                  "value": "Event"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                },
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                },
+                {
+                  "name": "Cold Call",
+                  "value": "Cold Call"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Technology",
+                  "value": "Technology"
+                },
+                {
+                  "name": "Finance",
+                  "value": "Finance"
+                },
+                {
+                  "name": "Healthcare",
+                  "value": "Healthcare"
+                },
+                {
+                  "name": "Retail",
+                  "value": "Retail"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                },
+                {
+                  "name": "Real Estate",
+                  "value": "Real Estate"
+                },
+                {
+                  "name": "Marketing",
+                  "value": "Marketing"
+                },
+                {
+                  "name": "Logistics",
+                  "value": "Logistics"
+                },
+                {
+                  "name": "Construction",
+                  "value": "Construction"
+                },
+                {
+                  "name": "Education",
+                  "value": "Education"
+                },
+                {
+                  "name": "Automotive",
+                  "value": "Automotive"
+                },
+                {
+                  "name": "Media",
+                  "value": "Media"
+                },
+                {
+                  "name": "Consulting",
+                  "value": "Consulting"
+                },
+                {
+                  "name": "Energy",
+                  "value": "Energy"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "High",
+                  "value": "High"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "Low",
+                  "value": "Low"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "New",
+                  "value": "New"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Qualified",
+                  "value": "Qualified"
+                },
+                {
+                  "name": "Proposal Sent",
+                  "value": "Proposal Sent"
+                },
+                {
+                  "name": "Won",
+                  "value": "Won"
+                },
+                {
+                  "name": "Lost",
+                  "value": "Lost"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Most Recent Call Date",
+              "displayName": "Most Recent Call Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "# Calls",
+              "displayName": "# Calls",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Calls",
+              "displayName": "Calls",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3615b5ad-c457-4ac8-9378-5b61de4cdc22",
+      "name": "Update Voicemail Status",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        624
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "QirPdWG4pZJxZI13",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this real estate call transcript and classify the lead.\n\nTranscript:\n{{ $json.body.transcript }}\n\nClassify the lead as:\n- lead_type: \"HOT\" (interested in selling soon), \"WARM\" (maybe interested later), \"COLD\" (not interested), \"WRONG_NUMBER\", or \"VOICEMAIL\"\n- motivation: \"HIGH\", \"MEDIUM\", or \"LOW\"\n- summary: Brief summary of seller intent\n- follow_up_needed: true or false",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert real estate lead analyst. Analyze call transcripts and classify seller motivation accurately. Always return structured JSON output matching the schema."
+        }
+      },
+      "id": "afee1837-ec2d-46a3-bf0a-ca1702c67a41",
+      "name": "Analyze Lead Transcript",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        688,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "f1f5a4eb-31bd-434e-8257-61ce82ce83e4",
+      "name": "OpenAI GPT-5 Mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        1152
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"lead_type\": \"HOT\", \"motivation\": \"HIGH\", \"summary\": \"Seller wants cash offer quickly\", \"follow_up_needed\": true }"
+      },
+      "id": "a984b311-880a-494b-87f1-85ee3c078e15",
+      "name": "Lead Classification Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appkms1NEp3EjL8uY",
+          "mode": "list",
+          "cachedResultName": "Lead Management",
+          "cachedResultUrl": "https://airtable.com/appkms1NEp3EjL8uY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbleBmdWKD39SGeh7",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appkms1NEp3EjL8uY/tbleBmdWKD39SGeh7"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Lead Source": "Outbound",
+            "Industry": "Real Estate",
+            "Priority": "High",
+            "Status": "New"
+          },
+          "matchingColumns": [
+            "id",
+            "Lead Name",
+            "Email",
+            "Phone",
+            "Company",
+            "Lead Source",
+            "Industry",
+            "Priority",
+            "Status",
+            "Most Recent Call Date",
+            "# Calls",
+            "Calls"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Name",
+              "displayName": "Lead Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Website",
+                  "value": "Website"
+                },
+                {
+                  "name": "Referral",
+                  "value": "Referral"
+                },
+                {
+                  "name": "Outbound",
+                  "value": "Outbound"
+                },
+                {
+                  "name": "Event",
+                  "value": "Event"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                },
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                },
+                {
+                  "name": "Cold Call",
+                  "value": "Cold Call"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Technology",
+                  "value": "Technology"
+                },
+                {
+                  "name": "Finance",
+                  "value": "Finance"
+                },
+                {
+                  "name": "Healthcare",
+                  "value": "Healthcare"
+                },
+                {
+                  "name": "Retail",
+                  "value": "Retail"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                },
+                {
+                  "name": "Real Estate",
+                  "value": "Real Estate"
+                },
+                {
+                  "name": "Marketing",
+                  "value": "Marketing"
+                },
+                {
+                  "name": "Logistics",
+                  "value": "Logistics"
+                },
+                {
+                  "name": "Construction",
+                  "value": "Construction"
+                },
+                {
+                  "name": "Education",
+                  "value": "Education"
+                },
+                {
+                  "name": "Automotive",
+                  "value": "Automotive"
+                },
+                {
+                  "name": "Media",
+                  "value": "Media"
+                },
+                {
+                  "name": "Consulting",
+                  "value": "Consulting"
+                },
+                {
+                  "name": "Energy",
+                  "value": "Energy"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "High",
+                  "value": "High"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "Low",
+                  "value": "Low"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "New",
+                  "value": "New"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Qualified",
+                  "value": "Qualified"
+                },
+                {
+                  "name": "Proposal Sent",
+                  "value": "Proposal Sent"
+                },
+                {
+                  "name": "Won",
+                  "value": "Won"
+                },
+                {
+                  "name": "Lost",
+                  "value": "Lost"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Most Recent Call Date",
+              "displayName": "Most Recent Call Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "# Calls",
+              "displayName": "# Calls",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Calls",
+              "displayName": "Calls",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "880608f5-f82a-4519-b635-d3f01dba7113",
+      "name": "Update Lead Record",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        928
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "QirPdWG4pZJxZI13",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.fields[\"Lead Type\"] }}",
+              "rightValue": "HOT",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5ae131b2-4a59-4862-bc6a-2ba6ff202c6d",
+      "name": "Is Hot Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "<__PLACEHOLDER_VALUE__team@yourcompany.com__>",
+        "subject": "=🔥 HOT SELLER LEAD - {{ $(\"Retell Webhook\").item.json.body.metadata.name }} from {{ $(\"Retell Webhook\").item.json.body.metadata.city }}",
+        "message": "=<h2>🔥 Hot Lead Alert</h2>\n<p><strong>{{ $(\"Retell Webhook\").item.json.body.metadata.name }}</strong> from <strong>{{ $(\"Retell Webhook\").item.json.body.metadata.city }}</strong> is interested in selling.</p>\n<p><strong>Property:</strong> {{ $(\"Retell Webhook\").item.json.body.metadata.property }}</p>\n<p><strong>Motivation:</strong> {{ $json.motivation }}</p>\n<p><strong>Summary:</strong> {{ $json.summary }}</p>\n<p><strong>Follow up immediately!</strong></p>",
+        "options": {}
+      },
+      "id": "10c12d37-3218-4fa3-bb0b-dc94c0f12e84",
+      "name": "Send Email Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1488,
+        928
+      ],
+      "webhookId": "8f0c50a4-08ee-4404-815d-d71cd458df23",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "nbzIFj3MMZG8NewQ",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0B0QKZDGTW",
+          "mode": "list",
+          "cachedResultName": "new-channel"
+        },
+        "messageType": "block",
+        "blocksUi": "=[\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \"🔥 HOT SELLER LEAD\"\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Name:*\\n{{ $(\"Retell Webhook\").item.json.body.metadata.name }}\"\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*City:*\\n{{ $(\"Retell Webhook\").item.json.body.metadata.city }}\"\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Property:*\\n{{ $(\"Retell Webhook\").item.json.body.metadata.property }}\"\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Motivation:*\\n{{ $(\"Update Lead Record\").item.json.fields[\"Motivation Level\"] }}\"\n      }\n    ]\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": \"*Summary:*\\n{{ $(\"Update Lead Record\").item.json.fields.Summary }}\"\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": \"⚡ *Follow up immediately!*\"\n    }\n  }\n]",
+        "text": "=🔥 HOT SELLER LEAD - {{ $(\"Retell Webhook\").item.json.body.metadata.name }}",
+        "otherOptions": {}
+      },
+      "id": "53912459-e1ed-43e3-9f82-9ea1e75425d6",
+      "name": "Send Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1712,
+        928
+      ],
+      "webhookId": "cc2cb5bb-d067-4f47-8b28-ad5abecbe13c",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "anA4c7LYWhzls8Ee",
+          "name": "Slack OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1502708816536666293",
+          "mode": "id"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1502708816536666293",
+          "mode": "id"
+        },
+        "content": "=🔥 **HOT SELLER LEAD**\n\n**{{ $(\"Retell Webhook\").item.json.body.metadata.name }}** from **{{ $(\"Retell Webhook\").item.json.body.metadata.city }}** is interested in selling!\n\n**Property:** {{ $(\"Retell Webhook\").item.json.body.metadata.property }}\n**Motivation:** {{ $(\"Update Lead Record\").item.json.fields[\"Motivation Level\"] }}\n**Summary:** {{ $(\"Update Lead Record\").item.json.fields.Summary }}\n\n⚡ **Follow up immediately!**",
+        "options": {}
+      },
+      "id": "3788fd04-4256-440c-a279-1822c2014ab6",
+      "name": "Send Discord Alert",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        928
+      ],
+      "webhookId": "100da1eb-2a5a-4619-b74c-91d265f86e2b",
+      "credentials": {
+        "discordBotApi": {
+          "id": "9dfKQ5VrrQS82jLY",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 📞 Outbound Calling Flow\n\nScheduled trigger fetches pending leads from Airtable every 5 minutes and initiates AI calls via Retell AI.",
+        "height": 200,
+        "width": 900,
+        "color": 2
+      },
+      "id": "3a0dc97f-7f43-4ac5-82b1-0445f6d4e57c",
+      "name": "Sticky Note 265009f3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        64,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 📥 Webhook Processing\n\nRetell AI sends webhook after call completion. Routes to voicemail update or AI analysis based on call status.",
+        "height": 200,
+        "width": 600,
+        "color": 3
+      },
+      "id": "0a21442f-417b-4a8d-8e82-9623a81816df",
+      "name": "Sticky Note 1f9b625b",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        112,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 AI Lead Analysis\n\nAI Agent analyzes call transcript and classifies lead motivation (HOT/WARM/COLD) with structured output.",
+        "height": 400,
+        "width": 600,
+        "color": 4
+      },
+      "id": "61307c61-ccb7-4d4d-b8b2-5f007dbbf160",
+      "name": "Sticky Note 2d244e2b",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        576,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🔔 Hot Lead Notifications\n\nWhen a HOT lead is detected, send immediate alerts via Email, Slack, and Discord to the acquisition team.",
+        "height": 600,
+        "width": 600,
+        "color": 5
+      },
+      "id": "a1caead9-5d35-4fcc-98ae-27c66227c816",
+      "name": "Sticky Note 58a057f6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        480
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Fetch Pending Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Pending Leads": {
+      "main": [
+        [
+          {
+            "node": "Create Retell AI Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retell Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Call Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Call Status": {
+      "main": [
+        [
+          {
+            "node": "Update Voicemail Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze Lead Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Lead Transcript": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-5 Mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analyze Lead Transcript",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Classification Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analyze Lead Transcript",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Record": {
+      "main": [
+        [
+          {
+            "node": "Is Hot Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Hot Lead?": {
+      "main": [
+        [
+          {
+            "node": "Send Email Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Discord Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2ef001bb-e9c0-4c3e-b0f7-6618a530c387",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6916d33dd16e5029f753e8c66ce20f4307254453fbcd8853dc98908dc4dc601"
+  },
+  "id": "1fAthaaAgfc7q90x",
+  "tags": []
+}
