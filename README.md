@@ -54,3 +54,5 @@ Airtable Leads → n8n Automation → Retell AI → Twilio Calls → AI Conversa
 ## Status
 
 Production-ready automation architecture for scalable AI outbound calling operations.
+
+![AI Outbound Calling System](https://github.com/webd2276/AI-Outbound-Calling-System/blob/main/image.png?raw=true)
